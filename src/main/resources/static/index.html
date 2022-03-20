@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <meta charset="UTF-8">
+    <style>
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td, th {
+            border: 1px solid #420a0a;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+<!--<h2>Пользователи</h2>-->
+
+<!--<table id="usersList">-->
+
+<!--</table>-->
+
+<!--<form action="#">-->
+<!--    <input id="user_name" placeholder="Имя пользователя">-->
+<!--    <input id="user_login" placeholder="Логин">-->
+<!--    <input id="user_email" placeholder="Почта">-->
+<!--    <button onclick="createUser()">Создать пользователя</button>-->
+<!--</form>-->
+
+<!--<input id="search_field">-->
+<!--<button onclick="searchByLogin()">Искать по логину</button>-->
+
+<h2>Выбрать предмет</h2>
+<form action="#">
+
+    <select id="select_spec" name="sel_specialnost"></select>
+    <select id="select_group" name="sel_group"></select>
+    <select id="select_discipline" name="sel_discipline"></select>
+<!--    <select id="select_stud" name="sel_stud"></select>-->
+    <select id="select_year" name="sel_year"></select>
+    <select id="select_month" name="sel_month"></select>
+    <button onclick="showJournal()">Показать журнал</button>
+
+</form>
+
+<h2>Добавить специальность</h2>
+<form name="formSpec" action="#">
+    <input id="specialization_name" placeholder="Название специальности">
+    <button onclick="createSpecialization()">Добавить специальность</button>
+</form>
+
+<h2>Добавить группу</h2>
+<form action="#">
+    <input id="group_name" placeholder="Название группы">
+    <button onclick="createGroup()">Добавить группу</button>
+</form>
+
+<h2>Добавить дисциплину</h2>
+<form action="#">
+    <input id="discipline_name" placeholder="Название дисциплины">
+    <button onclick="createDiscipline()">Добавить дисциплину</button>
+</form>
+
+<h2>Добавить студента</h2>
+<form action="#">
+    <input id="student_name" placeholder="ФИО учащегося">
+    <button onclick="createStudent()">Добавить студента</button>
+</form>
+
+<h2>Добавить оценку или пропуск</h2>
+<form action="#">
+
+    <select id="select_spec_j" name="sel_specialnost_j"></select>
+    <select id="select_group_j" name="sel_group_j"></select>
+    <select id="select_discipline_j" name="sel_discipline_j"></select>
+    <select id="select_student_j" name="sel_student_j"></select>
+    <select id="select_year_j" name="sel_year_j"></select>
+    <select id="select_month_j" name="sel_month_j"></select>
+    <select id="select_day_j" name="sel_day_j"></select>
+    <select id="select_mark_j" name="sel_mark_j"></select>
+
+
+    <button onclick="createList()">Добавтить отметку</button>
+
+</form>
+
+<table id="journal_table">
+
+</table>
+
+<script>
+
+    function showJournal() {
+        var xhttp = new XMLHttpRequest();
+        let setList = new Set();
+        var array = [];
+        var html = '';
+
+        xhttp.onreadystatechange = function () {
+        if (xhttp.readyState == 4 && xhttp.status == 200) {
+            var lists = JSON.parse(xhttp.responseText);
+
+            var html = '<tr>\n' +
+                '        <th>ФИО учащегося\ДАТА</th>\n';
+            for (var i = 1; i < 32; i++) {
+                html = html +
+                    '<th>' + i + '</th>\n'
+            }
+            html = html + '    </tr>\n';
+
+
+            for (var i = 0; i < lists.length; i++) {
+                var list = lists[i];
+                if (list.groupj == document.getElementById("select_group").value)
+                setList.add(list.student);
+            }
+
+            array = Array.from(setList);
+            array.sort();
+            var marker = '';
+            for (var i = 0; i < array.length; i++){ //Пробегаемся по каждой фамилии
+                html = html + '<tr><td>' + array[i] + '</td>\n';
+                for (var x = 1; x < 32; x++) { //Проверяем есть ли отметка на каждой дате
+                    for (var j = 0; j < lists.length; j++) {
+                        var list = lists[j];
+                        if ((list.student == array[i]) &&
+                             (list.groupj == document.getElementById("select_group").value)&&
+                                 (list.discipline == document.getElementById("select_discipline").value)&&
+                                     (list.year == document.getElementById("select_year").value)&&
+                                         (list.month == document.getElementById("select_month").value)&&
+                            (list.day == x))
+                        {
+                                            marker = list.mark;
+                        }
+                    }
+                    if(marker != ''){
+                        html = html + '<td>' + marker + '</td>\n';
+                    } else {html = html + '<td>' + ' ' + '</td>\n';}
+                    marker = '';
+                    if (x == 31) {
+                        html = html + '</tr\n>'
+                    }
+                }
+            }
+
+
+
+            document.getElementById("journal_table").innerHTML = html;
+        }
+    }
+    xhttp.open("GET", "http://localhost:8080/lists/findAll", true);
+    xhttp.send();
+    }
+
+
+
+
+    //++++++++++++USERS++++++++++++++
+    function searchByLogin() {
+        var login = document.getElementById("search_field").value;
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var user = JSON.parse(this.responseText);
+                var html = '<tr>\n' +
+                    '        <th>User id</th>\n' +
+                    '        <th>User name</th>\n' +
+                    '        <th>User login</th>\n' +
+                    '        <th>User email</th>\n' +
+                    '        <th>Delete</th>\n' +
+                    '    </tr>';
+                html = html + '<tr><td>' + user.id + '</td>\n' +
+                    '        <td>' + user.name + '</td>\n' +
+                    '        <td>' + user.login + '</td>\n' +
+                    '        <td>' + user.email + '</td>' +
+                    '        <td><button onclick="deleteUser(' + user.id + ')">Delete</button></td></tr>';
+                document.getElementById("usersList").innerHTML = html;
+            }
+        };
+        xhttp.open("GET", "http://localhost:8080/users/findByLogin?login=" + login, true);
+        xhttp.send();
+    }
+
+    function deleteUser(userId) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("DELETE", "http://localhost:8080/users/delete/" + userId, true);
+        xhttp.send();
+    }
+
+    function createUser() {
+        var userName = document.getElementById("user_name").value;
+        var userLogin = document.getElementById("user_login").value;
+        var userEmail = document.getElementById("user_email").value;
+
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/users/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({name: userName, login: userLogin, email: userEmail}));
+
+        loadUsers();
+    }
+
+    function loadUsers() {
+        loadSpecialization();
+        loadGroups();
+        loadDiscipline();
+        loadStudent();
+        loadSelect();
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () { //обработчик, который реагирует на состояние запроса(имеет 5 сотояний)
+            if (xhttp.readyState == 4 && xhttp.status == 200) { // проверяем чтобы было 4-е состояние(когда ответ от сервака готов, отображаем данные как пожелаем)
+                                                              //и 200 статус - положительный ответ от нашего сервера
+                var users = JSON.parse(xhttp.responseText);
+
+                var html = '<tr>\n' +                       //ЗАПОЛНЕНИЕ ТАБЛИЦЫ
+                    '        <th>id</th>\n' +
+                    '        <th>Имя пользователя</th>\n' +
+                    '        <th>Логин</th>\n' +
+                    '        <th>Почта</th>\n' +
+                    '        <th>Удалить</th>\n' +
+                    '    </tr>';                            //КОНЕЦ ШАПКИ
+
+                for (var i = 0; i < users.length; i++) {  //проходим по все базе данных
+                    var user = users[i]; //выбираеи и-того пользователя
+                    console.log(user); //вывод инфы в консоль - логирование
+                    html = html + '<tr><td>' + user.id + '</td>\n' +  //ЗАПОЛНЕНИЕ ТАБЛИЦЫ ИЗ БД
+                        '        <td>' + user.name + '</td>\n' +
+                        '        <td>' + user.login + '</td>\n' +
+                        '        <td>' + user.email + '</td>' +
+                        '        <td><button onclick="deleteUser(' + user.id + ')">Удалить</button></td></tr>\n';             //КОНЕЦ ЗАПОЛНЕНИЯ
+
+                }
+
+                document.getElementById("usersList").innerHTML = html;
+            }
+        };
+        xhttp.open("GET", "http://localhost:8080/users/findAll", true);
+        xhttp.send();
+    }
+    //++++++++++++USERS++++++++++++++
+
+    //++++++++++++SPECIALIZATION++++++++++++++
+    function createSpecialization() {
+        var specializationName = document.getElementById("specialization_name").value;
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/specialization/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({name: specializationName}));
+
+        loadUsers();
+    }
+
+    function loadSpecialization() {
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                var specializations = JSON.parse(xhttp.responseText);
+                var html = '';
+                //SELECT
+                // html = html +
+                //     '<select class="select_spec" name="specialnost">\n';
+                for (var i = 0; i < specializations.length; i++) {
+                    var specialization = specializations[i];
+                    html = html + '<option value=' + specialization.name + '>' + specialization.name + '</option>';
+                }
+                html = html + '</select>\n' +
+                    '</div>';
+                document.getElementById("select_spec").innerHTML = html;
+                document.getElementById("select_spec_j").innerHTML = html;
+            }
+        }
+        xhttp.open("GET", "http://localhost:8080/specialization/findAll", true);
+        xhttp.send();
+    }
+    //++++++++++++SPECIALIZATION++++++++++++++
+
+    //++++++++++++GROUPS++++++++++++++
+
+    function createGroup() {
+        var groupName = document.getElementById("group_name").value;
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/groups/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+            xmlhttp.send(JSON.stringify({specialization: document.getElementById("select_spec").value, name: groupName}));
+
+            loadUsers();
+
+    }
+
+    function loadGroups() {
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                var groups = JSON.parse(xhttp.responseText);
+                var html = '';
+                for (var i = 0; i < groups.length; i++) {
+                    var group = groups[i];
+                    html = html + '<option value=' + group.name + '>' + group.name + '</option>';
+                }
+                html = html + '</select>\n' +
+                    '</div>';
+                document.getElementById("select_group").innerHTML = html;
+                document.getElementById("select_group_j").innerHTML = html;
+            }
+        }
+        xhttp.open("GET", "http://localhost:8080/groups/findAll", true);
+        xhttp.send();
+    }
+    //++++++++++++GROUPS++++++++++++++
+
+    //++++++++++++DISCIPLINE++++++++++++++
+    function createDiscipline() {
+        var distName = document.getElementById("discipline_name").value;
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/disciplines/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({groups: document.getElementById("select_group").value, name: distName}));
+
+        loadUsers();
+
+
+    }
+
+    function loadDiscipline() {
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                var disciplines = JSON.parse(xhttp.responseText);
+                var html = '';
+                for (var i = 0; i < disciplines.length; i++) {
+                    var discipline = disciplines[i];
+                    html = html + '<option value=' + discipline.name + '>' + discipline.name + '</option>';
+                }
+                html = html + '</select>\n' +
+                    '</div>';
+                document.getElementById("select_discipline").innerHTML = html;
+                document.getElementById("select_discipline_j").innerHTML = html;
+            }
+        }
+        xhttp.open("GET", "http://localhost:8080/disciplines/findAll", true);
+        xhttp.send();
+    }
+    //++++++++++++DISCIPLINE++++++++++++++
+
+    //++++++++++++STUDENT++++++++++++++
+    function createStudent() {
+        var studentName = document.getElementById("student_name").value;
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/students/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({group_stud: document.getElementById("select_group").value, name: studentName}));
+
+        loadUsers();
+    }
+
+    function loadStudent() {
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function () {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                var students = JSON.parse(xhttp.responseText);
+                var html = '';
+                for (var i = 0; i < students.length; i++) {
+                    var student = students[i];
+                    html = html + '<option value=' + student.name + '>' + student.name + '</option>';
+                }
+                html = html + '</select>\n' +
+                    '</div>';
+                document.getElementById("select_student_j").innerHTML = html;
+            }
+        }
+        xhttp.open("GET", "http://localhost:8080/students/findAll", true);
+        xhttp.send();
+    }
+
+    function loadSelect() {
+        //YEAR
+        var html = '';
+        for (var i = 2020; i < 2023; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_year_j").innerHTML = html;
+        //YEAR - 2
+        var html = '';
+        for (var i = 2020; i < 2023; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_year").innerHTML = html;
+        //MONTH
+        var html = '';
+        for (var i = 1; i < 13; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_month_j").innerHTML = html;
+        //MONTH - 2
+        var html = '';
+        for (var i = 1; i < 13; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_month").innerHTML = html;
+
+        var html = '';
+        for (var i = 1; i < 32; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_day_j").innerHTML = html;
+        var html = '<option value="н">н</option>';
+        for (var i = 1; i < 11; i++) {
+            html = html + '<option value=' + i + '>' + i + '</option>';
+        }
+        html = html + '</select>\n' +
+            '</div>\n';
+        document.getElementById("select_mark_j").innerHTML = html;
+    }
+
+    function createList() {
+        var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance
+        xmlhttp.open("POST", "http://localhost:8080/lists/save");
+        xmlhttp.setRequestHeader("Content-Type", "application/json");
+        xmlhttp.send(JSON.stringify({
+            groupj: document.getElementById("select_group_j").value,
+            discipline: document.getElementById("select_discipline_j").value,
+            student: document.getElementById("select_student_j").value,
+            year: document.getElementById("select_year_j").value,
+            month: document.getElementById("select_month_j").value,
+            day: document.getElementById("select_day_j").value,
+            mark: document.getElementById("select_mark_j").value}));
+
+        //loadUsers();
+    }
+
+    loadUsers();
+
+</script>
+</body>
+</html>
